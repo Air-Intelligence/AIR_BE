@@ -4,6 +4,7 @@ import air.intelligence.constant.UserConstant;
 import air.intelligence.domain.Coord;
 import air.intelligence.service.UserService;
 import air.intelligence.util.api.BaseResponse;
+import air.intelligence.util.http.CookieUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,7 @@ import java.time.Duration;
 @Slf4j
 public class UserController {
     private final UserService userService;
+    private final CookieUtil cookieUtil;
 
     @PostMapping
     public ResponseEntity<BaseResponse<Void>> generateId(
@@ -30,13 +32,7 @@ public class UserController {
             HttpHeaders headers = new HttpHeaders();
             headers.add(
                     HttpHeaders.SET_COOKIE,
-                    ResponseCookie.from(UserConstant.USER_ID_COOKIE_NAME, newUserId)
-                            .domain("localhost") // TODO
-                            .httpOnly(true)
-                            .secure(true)
-                            .maxAge(Duration.ofDays(365))
-                            .build()
-                            .toString()
+                    this.cookieUtil.buildCookie(UserConstant.USER_ID_COOKIE_NAME, newUserId)
             );
 
             return new ResponseEntity<>(
