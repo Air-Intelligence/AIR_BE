@@ -24,7 +24,6 @@ public class UserService {
 
         User user = User.builder()
                 .id(generatedId)
-                .lastCoord(Coord.of(13.13, 15.25))
                 .build();
 
         this.userRepository.save(user);
