@@ -1,6 +1,7 @@
 package air.intelligence.controller;
 
 import air.intelligence.constant.UserConstant;
+import air.intelligence.domain.Coord;
 import air.intelligence.service.UserService;
 import air.intelligence.util.api.BaseResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<BaseResponse<Void>> generateId(
-            @CookieValue(name = "UserConstant.USER_ID_COOKIE_NAME") String userId) {
+            @CookieValue(name = "UserConstant.USER_ID_COOKIE_NAME", required = false) String userId) {
         if (userId == null) {
             String newUserId = this.userService.addUserIfNotExist();
 
@@ -48,6 +49,20 @@ public class UserController {
         return new ResponseEntity<>(
                 BaseResponse.of(200, null),
                 HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/last-coord")
+    public ResponseEntity<BaseResponse<Void>> putCoord(@RequestBody Coord coord,
+                                                       @CookieValue(name = UserConstant.USER_ID_COOKIE_NAME) String userId) {
+        if (userId == null) {
+            throw new IllegalStateException(); // TODO: Error Handling
+        }
+
+        this.userService.updateLastCoord(userId, coord);
+
+        return ResponseEntity.ok(
+                BaseResponse.of(200, null)
         );
     }
 }

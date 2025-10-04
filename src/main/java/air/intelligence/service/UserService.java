@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service
@@ -28,5 +29,12 @@ public class UserService {
         log.info("user={}", user);
 
         return generatedId;
+    }
+
+    public void updateLastCoord(String userId, Coord coord) {
+        User user = this.userRepository.findById(userId)
+                .orElseThrow(NoSuchElementException::new);
+
+        user.updateLastCoord(coord);
     }
 }

@@ -16,4 +16,8 @@ public class User {
     private String id;
 
     private Coord lastCoord;
+
+    public void updateLastCoord(Coord coord) {
+        this.lastCoord = coord;
+    }
 }
