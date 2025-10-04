@@ -1,5 +1,6 @@
 package air.intelligence.service;
 
+import air.intelligence.domain.User;
 import air.intelligence.dto.SubscriptionRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -11,22 +12,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationService {
+    private final UserService userService;
     private final PushService pushService;
-    private final Map<String, Subscription> subscriptions = new ConcurrentHashMap<>();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public void subscribe(SubscriptionRequest dto) {
-        if (this.subscriptions.containsKey(dto.getUserId())) {
-            return;
-        }
-        this.subscriptions.put(dto.getUserId(), dto.getSubscription());
-        log.info("New subscription added. Total subscriptions: {}", subscriptions.size());
+        User user = this.userService.findUser(dto.getUserId());
+        user.subscribe(dto.getSubscription());
+        this.userService.putUser(user);
     }
 
     public void sendNotification() {
@@ -37,7 +35,10 @@ public class NotificationService {
 
             String payloadJson = objectMapper.writeValueAsString(payload);
 
-            for (Subscription subscription : subscriptions.values()) {
+            for (Subscription subscription : this.userService.findAllUsers()
+                    .stream()
+                    .map(User::getPushSubscription)
+                    .toList()) {
                 try {
                     Notification notification = new Notification(subscription, payloadJson);
                     pushService.send(notification);
