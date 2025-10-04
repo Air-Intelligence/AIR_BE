@@ -4,3 +4,8 @@ spring:
   data:
     mongodb:
       uri: mongodb://localhost:27017/dust_mongo
+
+web-push:
+  vapid:
+    public-key: ${VAPID_PUBLIC_KEY}
+    private-key: ${VAPID_PRIVATE_KEY}
