@@ -5,6 +5,7 @@ import air.intelligence.dto.UserCreationDto;
 import air.intelligence.service.UserService;
 import air.intelligence.util.api.BaseResponse;
 import air.intelligence.util.http.CookieUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class UserController {
     }
 
     @PutMapping("/last-coord")
-    public ResponseEntity<BaseResponse<Void>> putCoord(@RequestBody LastCoordUpdateRequest dto) {
+    public ResponseEntity<BaseResponse<Void>> putCoord(@Valid @RequestBody LastCoordUpdateRequest dto) {
         this.userService.updateLastCoord(dto);
 
         return ResponseEntity.ok(
