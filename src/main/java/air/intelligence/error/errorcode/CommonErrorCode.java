@@ -1,4 +1,4 @@
-package air.intelligence.error;
+package air.intelligence.error.errorcode;
 
 import air.intelligence.util.api.ErrorSpec;
 import lombok.AccessLevel;

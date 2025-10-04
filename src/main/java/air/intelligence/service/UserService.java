@@ -2,7 +2,7 @@ package air.intelligence.service;
 
 import air.intelligence.dto.LastCoordUpdateRequest;
 import air.intelligence.dto.UserCreationDto;
-import air.intelligence.error.UserNotFoundException;
+import air.intelligence.error.exception.UserNotFoundException;
 import air.intelligence.value.Coord;
 import air.intelligence.domain.User;
 import air.intelligence.repository.UserRepository;
@@ -11,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 
 @Service

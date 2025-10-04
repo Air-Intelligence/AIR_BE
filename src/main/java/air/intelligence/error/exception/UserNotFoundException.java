@@ -1,4 +1,4 @@
-package air.intelligence.error;
+package air.intelligence.error.exception;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
