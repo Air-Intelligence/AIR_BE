@@ -24,6 +24,7 @@ public class UserService {
 
         User user = User.builder()
                 .id(generatedId)
+                .inDanger(false)
                 .build();
 
         this.userRepository.save(user);
@@ -43,6 +44,10 @@ public class UserService {
 
     public void putUser(User user) {
         this.userRepository.save(user);
+    }
+
+    public void putUsers(Iterable<User> users) {
+        this.userRepository.saveAll(users);
     }
 
     public User findUser(String id) {

@@ -19,6 +19,7 @@ public class User {
 
     private Coord lastCoord;
     private Subscription pushSubscription;
+    private boolean inDanger;
 
     public void updateLastCoord(Coord coord) {
         this.lastCoord = coord;
@@ -26,5 +27,13 @@ public class User {
 
     public void subscribe(Subscription subscription) {
         this.pushSubscription = subscription;
+    }
+
+    public void updateInDanger(boolean inDanger) {
+        this.inDanger = inDanger;
+    }
+
+    public boolean isNotifiable() {
+        return this.pushSubscription != null;
     }
 }
