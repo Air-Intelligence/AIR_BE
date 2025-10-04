@@ -29,7 +29,6 @@ public class UserService {
         this.userRepository.save(user);
 
         log.info("user={}", user);
-
         return new UserCreationDto(generatedId);
     }
 
