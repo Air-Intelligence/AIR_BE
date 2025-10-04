@@ -1,6 +1,6 @@
 package air.intelligence.service;
 
-import air.intelligence.domain.Coord;
+import air.intelligence.value.Coord;
 import air.intelligence.domain.User;
 import air.intelligence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

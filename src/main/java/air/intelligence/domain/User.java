@@ -1,5 +1,6 @@
 package air.intelligence.domain;
 
+import air.intelligence.value.Coord;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
