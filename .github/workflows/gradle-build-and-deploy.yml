@@ -57,8 +57,7 @@ jobs:
           username: ${{ secrets.GCE_USER }}
           key: ${{ secrets.GCE_SSH_KEY }}
           source: ${{ env.JAR_PATH }}
-          target: "/home/ubuntu/rowing/springboot/app.jar"
-          strip_components: 2
+          target: "/home/ubuntu/rowing/springboot/"
 
       # 8. Docker Compose 빌드 및 재시작
       - name: SSH and deploy with docker compose
