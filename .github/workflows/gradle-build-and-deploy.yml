@@ -24,14 +24,24 @@ jobs:
       - name: Build without tests
         run: ./gradlew clean build -x test
 
+      # 빌드 결과 파일명 추출
+      - name: Find built JAR name
+        id: findjar
+        run: |
+          JAR_PATH=$(ls build/libs/*-SNAPSHOT.jar | head -n 1)
+          echo "JAR_PATH=$JAR_PATH" >> $GITHUB_ENV
+          echo "📦 Found JAR: $JAR_PATH"
+
+      # 원격 폴더 초기화 및 JAR 복사
       - name: Copy JAR to GCP VM
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.GCE_HOST }}
           username: ${{ secrets.GCE_USER }}
           key: ${{ secrets.GCE_SSH_KEY }}
-          source: "build/libs/*-SNAPSHOT.jar"
+          source: ${{ env.JAR_PATH }}
           target: "/home/ubuntu/rowing/springboot/app.jar"
+          strip_components: 2
 
       - name: SSH and deploy with docker compose
         uses: appleboy/ssh-action@v0.1.7
@@ -41,6 +51,7 @@ jobs:
           key: ${{ secrets.GCE_SSH_KEY }}
           script: |
             cd /home/ubuntu/rowing/springboot
+            [ -d app.jar ] && rm -rf app.jar
             docker compose down || true
             docker compose build --no-cache
             docker compose up -d
