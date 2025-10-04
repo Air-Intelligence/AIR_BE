@@ -1,5 +1,7 @@
 package air.intelligence.service;
 
+import air.intelligence.dto.LastCoordUpdateRequest;
+import air.intelligence.dto.UserCreationDto;
 import air.intelligence.value.Coord;
 import air.intelligence.domain.User;
 import air.intelligence.repository.UserRepository;
@@ -16,7 +18,7 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
 
-    public String addUserIfNotExist() {
+    public UserCreationDto addUser() {
         String generatedId = UUID.randomUUID() + "_" + System.currentTimeMillis();
 
         User user = User.builder()
@@ -27,15 +29,14 @@ public class UserService {
         this.userRepository.save(user);
 
         log.info("user={}", user);
-
-        return generatedId;
+        return new UserCreationDto(generatedId);
     }
 
-    public void updateLastCoord(String userId, Coord coord) {
-        User user = this.userRepository.findById(userId)
+    public void updateLastCoord(LastCoordUpdateRequest dto) {
+        User user = this.userRepository.findById(dto.getUserId())
                 .orElseThrow(NoSuchElementException::new);
 
-        user.updateLastCoord(coord);
+        user.updateLastCoord(dto.getCoord());
 
         this.userRepository.save(user);
     }
