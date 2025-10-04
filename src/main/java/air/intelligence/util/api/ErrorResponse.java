@@ -1,4 +1,4 @@
-package air.intelligence.common.api;
+package air.intelligence.util.api;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

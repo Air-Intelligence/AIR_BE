@@ -1,6 +1,6 @@
-package air.intelligence.common.error;
+package air.intelligence.error;
 
-import air.intelligence.common.api.ErrorSpec;
+import air.intelligence.util.api.ErrorSpec;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
