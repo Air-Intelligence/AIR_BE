@@ -36,7 +36,9 @@ jobs:
 
       # 5. JAR 파일 복사 (app.jar로 고정)
       - name: Copy JAR
-        run: cp build/libs/*.jar app.jar
+        run: |
+          mkdir -p build/docker
+          cp build/libs/*-SNAPSHOT.jar build/docker/app.jar
 
       # 6. DockerHub 로그인
       - name: Log in to DockerHub
