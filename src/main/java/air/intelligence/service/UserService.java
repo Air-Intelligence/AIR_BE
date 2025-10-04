@@ -36,5 +36,7 @@ public class UserService {
                 .orElseThrow(NoSuchElementException::new);
 
         user.updateLastCoord(coord);
+
+        this.userRepository.save(user);
     }
 }
