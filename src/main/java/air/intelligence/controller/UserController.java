@@ -1,6 +1,8 @@
 package air.intelligence.controller;
 
 import air.intelligence.constant.UserConstant;
+import air.intelligence.dto.LastCoordUpdateRequest;
+import air.intelligence.dto.UserCreationDto;
 import air.intelligence.value.Coord;
 import air.intelligence.service.UserService;
 import air.intelligence.util.api.BaseResponse;
@@ -12,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -21,38 +25,16 @@ public class UserController {
     private final CookieUtil cookieUtil;
 
     @PostMapping
-    public ResponseEntity<BaseResponse<Void>> generateId(
-            @CookieValue(name = "UserConstant.USER_ID_COOKIE_NAME", required = false) String userId) {
-        if (userId == null) {
-            String newUserId = this.userService.addUserIfNotExist();
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(
-                    HttpHeaders.SET_COOKIE,
-                    this.cookieUtil.buildCookie(UserConstant.USER_ID_COOKIE_NAME, newUserId)
-            );
-
-            return new ResponseEntity<>(
-                    BaseResponse.of(201, null),
-                    headers,
-                    HttpStatus.CREATED
-            );
-        }
-
+    public ResponseEntity<BaseResponse<UserCreationDto>> generateId() {
         return new ResponseEntity<>(
-                BaseResponse.of(200, null),
+                BaseResponse.of(200, this.userService.addUser()),
                 HttpStatus.OK
         );
     }
 
     @PutMapping("/last-coord")
-    public ResponseEntity<BaseResponse<Void>> putCoord(@RequestBody Coord coord,
-                                                       @CookieValue(name = UserConstant.USER_ID_COOKIE_NAME) String userId) {
-        if (userId == null) {
-            throw new IllegalStateException(); // TODO: Error Handling
-        }
-
-        this.userService.updateLastCoord(userId, coord);
+    public ResponseEntity<BaseResponse<Void>> putCoord(@RequestBody LastCoordUpdateRequest dto) {
+        this.userService.updateLastCoord(dto);
 
         return ResponseEntity.ok(
                 BaseResponse.of(200, null)
