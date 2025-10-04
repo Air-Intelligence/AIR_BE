@@ -1,0 +1,5 @@
+# Mongo DB
+
+docker pull mongodb/mongodb-community-server:7.0.24-rc0-ubi8
+docker run --name mongodb -d -p 27017:27017 mongodb/mongodb-community-server:7.0.24-rc0-ubi8
+

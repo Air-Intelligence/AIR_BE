@@ -1,3 +1,6 @@
 spring:
   application:
     name: air-intelligence
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/dust_mongo
