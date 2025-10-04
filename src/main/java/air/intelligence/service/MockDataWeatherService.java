@@ -33,6 +33,24 @@ public class MockDataWeatherService implements WeatherService {
                                         }
                                 ),
                                 Map.of("value", 60.0)
+                        ),
+                        new GeoFeature(
+                                GeoFeatureType.FEATURE.asPascalCase(),
+                                new Geometry(
+                                        GeoFeatureType.POLYGON.asPascalCase(),
+                                        new double[][][] {
+                                                {
+                                                        { 126.832834, 37.430823 },
+                                                        { 126.956430, 37,405192 },
+                                                        { 127.104059, 37.480425 },
+                                                        { 127.024061, 37.565985 },
+                                                        { 126.953790, 37.568794 },
+                                                        { 126.896510, 37.562709 },
+                                                        { 126.832834, 37.430823 }
+                                                }
+                                        }
+                                ),
+                                Map.of("value", 30.0)
                         )
                 }
         );
