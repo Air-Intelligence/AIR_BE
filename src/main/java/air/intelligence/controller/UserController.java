@@ -30,7 +30,7 @@ public class UserController {
                 ResponseCookie.from(UserConstant.USER_ID_COOKIE_NAME.getString(), userId)
                         .httpOnly(true)
                         .secure(true)
-                        .maxAge(Duration.of(1, ChronoUnit.YEARS))
+                        .maxAge(Duration.ofDays(365))
                         .toString()
         );
 
