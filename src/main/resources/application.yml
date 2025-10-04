@@ -9,3 +9,6 @@ web-push:
   vapid:
     public-key: ${VAPID_PUBLIC_KEY}
     private-key: ${VAPID_PRIVATE_KEY}
+
+cookie:
+  domain: ${COOKIE_DOMAIN:localhost}
