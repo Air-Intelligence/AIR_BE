@@ -28,38 +28,27 @@ jobs:
       - name: Build without tests
         run: ./gradlew clean build -x test
 
-      # 5. 생성된 JAR 파일 경로 확인
-      - name: Find built JAR name
-        id: findjar
-        run: |
-          JAR_PATH=$(ls build/libs/*-SNAPSHOT.jar | head -n 1)
-          echo "JAR_PATH=$JAR_PATH" >> $GITHUB_ENV
-          echo "📦 Found JAR: $JAR_PATH"
+      # 5. JAR 파일 복사 (app.jar로 고정)
+      - name: Copy JAR
+        run: cp build/libs/*.jar app.jar
 
-      # 6. 기존 app.jar 정리
-      - name: Clean old app.jar before copy
-        uses: appleboy/ssh-action@v0.1.7
+      # 6. DockerHub 로그인
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/rowing/springboot
-            [ -d app.jar ] && rm -rf app.jar
-            [ -f app.jar ] && rm -f app.jar
-            echo "🧹 Cleaned old app.jar"
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 7. JAR 파일 복사
-      - name: Copy JAR to GCP VM
-        uses: appleboy/scp-action@v0.1.7
+      # 7. Docker Image Build & Push
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
         with:
-          host: ${{ secrets.GCE_HOST }}
-          username: ${{ secrets.GCE_USER }}
-          key: ${{ secrets.GCE_SSH_KEY }}
-          source: ${{ env.JAR_PATH }}
-          target: "/home/ubuntu/rowing/springboot/"
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKER_USERNAME }}/air-core-dev-be-images:latest
 
-      # 8. Docker Compose 빌드 및 재시작
+      # 8. 서버 접속해서 docker compose 재배포
       - name: SSH and deploy with docker compose
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -69,6 +58,6 @@ jobs:
           script: |
             cd /home/ubuntu/rowing/springboot
             docker compose down || true
-            docker compose build --no-cache
+            docker compose pull
             docker compose up -d
             docker compose ps
