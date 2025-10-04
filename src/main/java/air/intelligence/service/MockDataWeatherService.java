@@ -23,11 +23,11 @@ public class MockDataWeatherService implements WeatherService {
                                 new Geometry(
                                         GeoFeatureType.POLYGON.asPascalCase(),
                                         new double[][] {
-                                                { 37.5, 126.934657 },
-                                                { 36.507333, 126.973625 },
-                                                { 37.51717137, 126.972766 },
-                                                { 37.524898, 126.949077 },
-                                                { 37.5, 126.934657 }
+                                                { 126.934657, 37.5 },
+                                                { 126.973625, 36.507333 },
+                                                { 126.972766, 37.51717137 },
+                                                { 126.949077, 37.524898 },
+                                                { 126.934657, 37.5 }
                                         }
                                 ),
                                 Map.of("value", 60.0)
@@ -45,7 +45,7 @@ public class MockDataWeatherService implements WeatherService {
                                 GeoFeatureType.FEATURE.asPascalCase(),
                                 new Geometry(
                                         GeoFeatureType.POINT.asPascalCase(),
-                                        new double[] { 37.528787, 126.842733 }
+                                        new double[] { 126.842733, 37.528787 }
                                 ),
                                 Map.of("value", 60.0)
                         ),
@@ -53,7 +53,7 @@ public class MockDataWeatherService implements WeatherService {
                                 GeoFeatureType.FEATURE.asPascalCase(),
                                 new Geometry(
                                         GeoFeatureType.POINT.asPascalCase(),
-                                        new double[] { 37.533859, 126.907964 }
+                                        new double[] { 126.907964, 37.533859 }
                                 ),
                                 Map.of("value", 45.64)
                         ),
@@ -61,7 +61,7 @@ public class MockDataWeatherService implements WeatherService {
                                 GeoFeatureType.FEATURE.asPascalCase(),
                                 new Geometry(
                                         GeoFeatureType.POINT.asPascalCase(),
-                                        new double[] { 37.568155, 126.907621 }
+                                        new double[] { 126.907621, 37.568155 }
                                 ),
                                 Map.of("value", 30.0)
                         ),
@@ -69,7 +69,7 @@ public class MockDataWeatherService implements WeatherService {
                                 GeoFeatureType.FEATURE.asPascalCase(),
                                 new Geometry(
                                         GeoFeatureType.POINT.asPascalCase(),
-                                        new double[] { 37.567882, 126.852346 }
+                                        new double[] { 126.852346, 37.567882 }
                                 ),
                                 Map.of("value", 50.0)
                         )
