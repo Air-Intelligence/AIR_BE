@@ -40,6 +40,8 @@ public class UserService {
         user.updateLastCoord(dto.getCoord());
 
         this.userRepository.save(user);
+
+        // TODO: LastCoordUpdateResponse
     }
 
     public void putUser(User user) {
