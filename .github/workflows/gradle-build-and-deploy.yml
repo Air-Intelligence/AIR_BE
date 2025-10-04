@@ -28,6 +28,12 @@ jobs:
       - name: Build without tests
         run: ./gradlew clean build -x test
 
+      # 빌드 산출물 확인
+      - name: Check built JARs
+        run: |
+          echo "=== build/libs 디렉토리 내용 확인 ==="
+          ls -al build/libs || true
+
       # 5. JAR 파일 복사 (app.jar로 고정)
       - name: Copy JAR
         run: cp build/libs/*.jar app.jar
