@@ -1,6 +1,7 @@
 package air.intelligence.domain;
 
 import air.intelligence.value.Coord;
+import air.intelligence.value.WarningLevel;
 import lombok.*;
 import nl.martijndwars.webpush.Subscription;
 import org.springframework.data.annotation.Id;
@@ -19,7 +20,7 @@ public class User {
 
     private Coord lastCoord;
     private Subscription pushSubscription;
-    private boolean inDanger;
+    private WarningLevel warningLevel;
 
     public void updateLastCoord(Coord coord) {
         this.lastCoord = coord;
@@ -29,8 +30,8 @@ public class User {
         this.pushSubscription = subscription;
     }
 
-    public void updateInDanger(boolean inDanger) {
-        this.inDanger = inDanger;
+    public void updateWarningLevel(WarningLevel warningLevel) {
+        this.warningLevel = warningLevel;
     }
 
     public boolean isNotifiable() {

@@ -5,5 +5,9 @@ public enum WarningLevel {
     READY,
     WARNING,
     DANGER,
-    RUN
+    RUN;
+
+    public boolean isDanger() {
+        return this != SAFE;
+    }
 }

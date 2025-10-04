@@ -3,18 +3,21 @@ package air.intelligence.scheduler;
 import air.intelligence.domain.User;
 import air.intelligence.service.NasaDataService;
 import air.intelligence.service.UserService;
+import air.intelligence.value.WarningLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
-import org.jose4j.lang.JoseException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @RequiredArgsConstructor
@@ -30,29 +33,31 @@ public class WarningScheduler {
         List<User> allUsers = this.userService.findAllUsers();
 
         // TODO: find users in not good air condition
-        List<User> usersInDanger = allUsers;
-        List<User> usersNotInDanger = List.of();
+        Map<WarningLevel, Collection<User>> usersByWarningLevel = allUsers.stream().collect(
+                Collectors.toMap((key) -> WarningLevel.WARNING,
+                        Arrays::asList,
+                        (col1, col2) -> Stream.concat(col1.stream(), col2.stream()).toList())
+        );
 
-        usersInDanger.forEach((user) -> {
-            try {
-                user.updateInDanger(true);
-
-                if (user.isNotifiable()) {
-                    this.pushService.send(
-                            new Notification(
-                                    user.getPushSubscription(),
-                                    "Hello, World!"
-                            )
-                    );
+        usersByWarningLevel.forEach((warningLevel, users) -> {
+            users.forEach((user) -> {
+                try {
+                    if (warningLevel.isDanger() && user.isNotifiable()) {
+                        this.pushService.send(
+                                new Notification(
+                                        user.getPushSubscription(),
+                                        "Hello, World!"
+                                )
+                        );
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    user.updateWarningLevel(warningLevel);
                 }
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            });
         });
-        usersNotInDanger.forEach((user) ->
-                user.updateInDanger(false));
 
-        this.userService.putUsers(usersInDanger);
-        this.userService.putUsers(usersNotInDanger);
+        this.userService.putUsers(usersByWarningLevel.values().stream().flatMap(Collection::stream).toList());
     }
 }

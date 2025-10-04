@@ -1,6 +1,7 @@
 package air.intelligence.controller;
 
 import air.intelligence.dto.LastCoordUpdateRequest;
+import air.intelligence.dto.LastCoordUpdateResponse;
 import air.intelligence.dto.UserCreationDto;
 import air.intelligence.service.UserService;
 import air.intelligence.util.api.BaseResponse;
@@ -29,11 +30,11 @@ public class UserController {
     }
 
     @PutMapping("/last-coord")
-    public ResponseEntity<BaseResponse<Void>> putCoord(@Valid @RequestBody LastCoordUpdateRequest dto) {
-        this.userService.updateLastCoord(dto);
+    public ResponseEntity<BaseResponse<LastCoordUpdateResponse>> putCoord(@Valid @RequestBody LastCoordUpdateRequest dto) {
+        LastCoordUpdateResponse result = this.userService.updateLastCoord(dto);
 
         return ResponseEntity.ok(
-                BaseResponse.of(200, null)
+                BaseResponse.of(200, result)
         );
     }
 }

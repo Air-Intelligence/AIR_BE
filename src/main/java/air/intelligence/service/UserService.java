@@ -1,11 +1,13 @@
 package air.intelligence.service;
 
 import air.intelligence.dto.LastCoordUpdateRequest;
+import air.intelligence.dto.LastCoordUpdateResponse;
 import air.intelligence.dto.UserCreationDto;
 import air.intelligence.error.exception.UserNotFoundException;
 import air.intelligence.value.Coord;
 import air.intelligence.domain.User;
 import air.intelligence.repository.UserRepository;
+import air.intelligence.value.WarningLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ public class UserService {
 
         User user = User.builder()
                 .id(generatedId)
-                .inDanger(false)
+                .warningLevel(WarningLevel.SAFE)
                 .build();
 
         this.userRepository.save(user);
@@ -33,7 +35,7 @@ public class UserService {
         return new UserCreationDto(generatedId);
     }
 
-    public void updateLastCoord(LastCoordUpdateRequest dto) {
+    public LastCoordUpdateResponse updateLastCoord(LastCoordUpdateRequest dto) {
         User user = this.userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(dto.getUserId()));
 
@@ -42,6 +44,11 @@ public class UserService {
         this.userRepository.save(user);
 
         // TODO: LastCoordUpdateResponse
+        return new LastCoordUpdateResponse(
+                dto.getUserId(),
+                dto.getCoord(),
+                user.getWarningLevel()
+        );
     }
 
     public void putUser(User user) {
