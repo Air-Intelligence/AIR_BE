@@ -65,6 +65,9 @@ public class WarningScheduler {
         Map<WarningLevel, Collection<User>> usersByWarningLevel = new HashMap<>();
 
         for (User user : allUsers) {
+            if (user.getLastCoord() == null) {
+                continue;
+            }
             double userLat = user.getLastCoord().getLat();
             double userLon = user.getLastCoord().getLon();
 
@@ -72,9 +75,11 @@ public class WarningScheduler {
             WarningLevel warningLevel = null;
             for (GeoFeature feature : polygonFeatures) {
                 if (isPointInPolygon(userLon, userLat, feature.geometry().coordinates())) {
-                    warningLevel = (WarningLevel) feature.properties().value();
+                    log.info("point in polygon, warningLevel={}", feature.properties().value());
+                    warningLevel = WarningLevel.valueOf(feature.properties().value().toString());
                     break;
                 }
+                log.info("point not in polygon");
             }
 
             // If not in any polygon, default to SAFE
@@ -312,42 +317,47 @@ public class WarningScheduler {
     }
 
     private boolean isPointInPolygon(double lon, double lat, Object coordinates) {
-        if (!(coordinates instanceof double[][][])) {
+        if (!(coordinates instanceof List)) {
             return false;
         }
 
-        double[][][] polygonCoords = (double[][][]) coordinates;
-        if (polygonCoords.length == 0 || polygonCoords[0].length == 0) {
+        List<List<List<Double>>> polygonCoords = (List<List<List<Double>>>) coordinates;
+        if (polygonCoords.isEmpty() || polygonCoords.get(0).isEmpty()) {
             return false;
         }
 
-        // Use ray casting algorithm for point-in-polygon test
-        // Reference: https://sncap.tistory.com/680
+        // GeoJSON polygon은 [ [ [lon, lat], [lon, lat], ... ] ] 구조
+        List<List<Double>> ring = polygonCoords.get(0); // 첫 번째 ring (외곽)
         int crosses = 0;
-        int n = polygonCoords[0].length;
+        int n = ring.size();
 
         for (int i = 0; i < n; i++) {
             int j = (i + 1) % n;
 
-            double[] pi = polygonCoords[0][i];
-            double[] pj = polygonCoords[0][j];
+            List<Double> pi = ring.get(i);
+            List<Double> pj = ring.get(j);
 
-            double xi = pi[0], yi = pi[1];
-            double xj = pj[0], yj = pj[1];
+            double xi = pi.get(0); // 경도 (lon)
+            double yi = pi.get(1); // 위도 (lat)
+            double xj = pj.get(0);
+            double yj = pj.get(1);
 
-            // Check if point's y-coordinate is between the vertices' y-coordinates
+            log.info("xi={}, yi={}, xj={}, yj={}", xi, yi, xj, yj);
+            log.info("lat={}, lon={}", lat, lon);
+
+            // lat 좌표가 두 점 사이에 있는지 확인
             if ((yi > lat) != (yj > lat)) {
-                // Calculate x-coordinate of intersection point
+                // 교차점의 x 좌표 계산
                 double atX = (xj - xi) * (lat - yi) / (yj - yi) + xi;
 
-                // If intersection x-coordinate is to the right of the point, increment crosses
+                // 점의 경도보다 오른쪽에 교차점이 있으면 카운트
                 if (lon < atX) {
                     crosses++;
                 }
             }
         }
 
-        // If number of crosses is odd, point is inside polygon
-        return crosses % 2 == 1;
+        // 홀수면 내부, 짝수면 외부
+        return (crosses % 2 == 1);
     }
 }
