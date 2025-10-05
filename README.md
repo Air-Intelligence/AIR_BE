@@ -293,7 +293,7 @@ air.intelligence/
              │
              ▼
 ┌──────────────────────────────┐
-│ 5. AI Prediction (NEW)       │
+│ 5. AI Prediction             │
 │    For users NOT in danger   │
 │                              │
 │    - Query PM2.5 prediction  │
@@ -389,8 +389,8 @@ Uses **Ray Casting Algorithm** for user location-based risk level determination:
 | Level | NO2 Range | Description | Notification |
 |-------|-----------|-------------|--------------|
 | SAFE | < 2.0 | Safe | ❌ |
-| READY | 2.0 ~ 4.0 | Caution | ❌ |
-| WARNING | 4.0 ~ 6.0 | Warning | ❌ |
+| READY | 2.0 ~ 4.0 | Caution | ✅ Push notification |
+| WARNING | 4.0 ~ 6.0 | Warning | ✅ Push notification |
 | DANGER | 6.0 ~ 7.8 | Dangerous | ✅ Push notification |
 | RUN | ≥ 7.8 | Very dangerous | ✅ Push notification |
 
@@ -401,7 +401,7 @@ Warning thresholds are managed in `WarningConstant.java`.
 After running the application, access the auto-generated API documentation via SpringDoc OpenAPI:
 
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ### Main Endpoints
@@ -409,12 +409,10 @@ http://localhost:8080/swagger-ui.html
 #### Air Quality Query
 
 - `GET /api/v1/weathers/polygon` - Query polygon data by warning level
-    - ~~Query Parameters: `lower-lat`, `lower-lon`, `upper-lat`, `upper-lon`~~ (currently unused)
     - Response: GeoJSON FeatureCollection (Polygon)
     - Returns pre-calculated cached data
 
 - `GET /api/v1/weathers/point` - Query grid-based point data
-    - ~~Query Parameters: `lower-lat`, `lower-lon`, `upper-lat`, `upper-lon`~~ (currently unused)
     - Response: GeoJSON FeatureCollection (Point)
     - Returns pre-calculated cached data
 
@@ -447,33 +445,16 @@ http://localhost:8080/swagger-ui.html
 ### Scheduler Operation
 
 ```java
-@Scheduled(fixedRate = 1000 * 60 * 5)  // Every 5 minutes
+@Scheduled(fixedRate = 1000 * 60 * 60)  // Every 1 hour
 public void task() {
     1. Fetch NO2 data
     2. Save NasaData
     3. Calculate and save GeoFeatureData (polygon, point)
     4. Determine user risk levels (Point-in-Polygon)
-    5. Send push notifications
+    5. Determine predicted (by AI) user risk levels 
+    6. Send push notifications
 }
 ```
-
-### Writing Tests
-
-```bash
-# Location for new test classes
-src/test/java/air/intelligence/
-
-# Run tests
-./gradlew test
-```
-
-### Adding New API
-
-1. Add controller to `controller/`
-2. Add interface and implementation to `service/`
-3. Add `repository/`, `dto/` if needed
-4. Define error codes in `error/errorcode/`
-5. Write test code
 
 ## Deployment
 
@@ -500,32 +481,3 @@ docker run -d \
   --name air-intelligence-app \
   air-intelligence
 ```
-
-### Production Checklist
-
-- [ ] Verify environment variables
-- [ ] Verify MongoDB connection settings
-- [ ] Configure CORS allowed origins
-- [ ] Generate and configure VAPID keys
-- [ ] Verify FastAPI server accessibility
-- [ ] Verify scheduler operation (runs every 5 minutes)
-- [ ] Create index on GeoFeatureData collection (`type` field)
-- [ ] Adjust log levels (production environment)
-- [ ] Verify health check endpoint (`/actuator/health`)
-
-## Recent Changes (Changelog)
-
-### v0.0.1-SNAPSHOT (Latest)
-- ✅ **Batch Processing Optimization**: Moved GeoFeature calculation to scheduler
-- ✅ **Caching Strategy**: Added `GeoFeatureData` collection
-- ✅ **Point-in-Polygon Algorithm**: Ray Casting-based user location determination
-- ✅ **API Performance Improvement**: Removed real-time calculations, changed to query-only APIs
-- ✅ **Code Refactoring**: Integrated Convex Hull logic into Scheduler
-
-## License
-
-[License information to be added]
-
-## Contact
-
-[Contact information to be added]
