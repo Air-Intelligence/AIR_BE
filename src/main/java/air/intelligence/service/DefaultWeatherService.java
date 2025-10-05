@@ -5,6 +5,7 @@ import air.intelligence.domain.NasaData;
 import air.intelligence.dto.GeoResponse;
 import air.intelligence.repository.WeatherRepository;
 import air.intelligence.value.*;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -137,19 +138,95 @@ public class DefaultWeatherService implements WeatherService {
     public GeoResponse getPointedWeatherData(double lowerLat, double lowerLon, double upperLat, double upperLon) {
         List<NasaData> nasaData = this.weatherRepository.findByLatLonRange(lowerLat, lowerLon, upperLat, upperLon);
 
-        // TODO: 범위 정하기
+        if (nasaData.isEmpty()) {
+            return new GeoResponse(
+                    GeoFeatureType.FEATURE_COLLECTION.asPascalCase(),
+                    new GeoFeature[0]
+            );
+        }
+
+        final int latLonRange = 1;
+
+        double latMax = nasaData.stream().map(NasaData::getLat).max(Comparator.naturalOrder()).get();
+        double latMin = nasaData.stream().map(NasaData::getLat).min(Comparator.naturalOrder()).get();
+        double lonMax = nasaData.stream().map(NasaData::getLon).max(Comparator.naturalOrder()).get();
+        double lonMin = nasaData.stream().map(NasaData::getLon).min(Comparator.naturalOrder()).get();
+
+        // Align to grid boundaries
+        double gridLatMin = Math.floor(latMin / latLonRange) * latLonRange;
+        double gridLatMax = Math.ceil(latMax / latLonRange) * latLonRange;
+        double gridLonMin = Math.floor(lonMin / latLonRange) * latLonRange;
+        double gridLonMax = Math.ceil(lonMax / latLonRange) * latLonRange;
+
+        int latBoxes = (int) ((gridLatMax - gridLatMin) / latLonRange);
+        int lonBoxes = (int) ((gridLonMax - gridLonMin) / latLonRange);
+
+        // Handle case where data range is smaller than latLonRange
+        if (latBoxes == 0 || lonBoxes == 0) {
+            // If range is too small, just return single point with average of all values
+            double avgValue = nasaData.stream()
+                    .mapToDouble(NasaData::getValue)
+                    .average()
+                    .orElse(0.0);
+
+            double centerLat = (latMax + latMin) / 2;
+            double centerLon = (lonMax + lonMin) / 2;
+
+            return new GeoResponse(
+                    GeoFeatureType.FEATURE_COLLECTION.asPascalCase(),
+                    new GeoFeature[]{
+                            new GeoFeature(
+                                    GeoFeatureType.FEATURE.asPascalCase(),
+                                    new Geometry(
+                                            GeoFeatureType.POINT.asPascalCase(),
+                                            new double[]{centerLon, centerLat}
+                                    ),
+                                    new GeoProperties(avgValue)
+                            )
+                    }
+            );
+        }
+
+        // Group data by grid box
+        Map<String, List<Double>> scoreByBoxKey = new HashMap<>();
+        for (NasaData ns : nasaData) {
+            int latIdx = (int) Math.floor((ns.getLat() - gridLatMin) / latLonRange);
+            int lonIdx = (int) Math.floor((ns.getLon() - gridLonMin) / latLonRange);
+            String boxKey = latIdx + "," + lonIdx;
+            scoreByBoxKey.computeIfAbsent(boxKey, k -> new ArrayList<>()).add(ns.getValue());
+        }
+
+        // Calculate average value for each box and create GeoFeatures
+        List<GeoFeature> features = new ArrayList<>();
+        for (Map.Entry<String, List<Double>> entry : scoreByBoxKey.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                String[] indices = entry.getKey().split(",");
+                int latIdx = Integer.parseInt(indices[0]);
+                int lonIdx = Integer.parseInt(indices[1]);
+
+                double avgValue = entry.getValue().stream()
+                        .mapToDouble(Double::doubleValue)
+                        .average()
+                        .orElse(0.0);
+
+                // Calculate center coordinates of the box
+                double centerLat = gridLatMin + (latIdx + 0.5) * latLonRange;
+                double centerLon = gridLonMin + (lonIdx + 0.5) * latLonRange;
+
+                features.add(new GeoFeature(
+                        GeoFeatureType.FEATURE.asPascalCase(),
+                        new Geometry(
+                                GeoFeatureType.POINT.asPascalCase(),
+                                new double[]{centerLon, centerLat}
+                        ),
+                        new GeoProperties(avgValue)
+                ));
+            }
+        }
 
         return new GeoResponse(
                 GeoFeatureType.FEATURE_COLLECTION.asPascalCase(),
-                nasaData.stream()
-                        .map(data -> new GeoFeature(
-                                GeoFeatureType.FEATURE.asPascalCase(),
-                                new Geometry(
-                                        GeoFeatureType.POINT.asPascalCase(),
-                                        new double[]{data.getLon(), data.getLat()}
-                                ),
-                                new GeoProperties(data.getValue())
-                        ))
+                features.stream()
                         .sorted((n1, n2) ->
                                 (int) ((double) n1.properties().value() * 100 - (double) n2.properties().value() * 100))
                         .toArray(GeoFeature[]::new)
