@@ -1,11 +1,13 @@
 package air.intelligence.service;
 
 import air.intelligence.dto.LastCoordUpdateRequest;
+import air.intelligence.dto.LastCoordUpdateResponse;
 import air.intelligence.dto.UserCreationDto;
 import air.intelligence.error.exception.UserNotFoundException;
 import air.intelligence.value.Coord;
 import air.intelligence.domain.User;
 import air.intelligence.repository.UserRepository;
+import air.intelligence.value.WarningLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,7 @@ public class UserService {
 
         User user = User.builder()
                 .id(generatedId)
+                .warningLevel(WarningLevel.SAFE)
                 .build();
 
         this.userRepository.save(user);
@@ -32,17 +35,28 @@ public class UserService {
         return new UserCreationDto(generatedId);
     }
 
-    public void updateLastCoord(LastCoordUpdateRequest dto) {
+    public LastCoordUpdateResponse updateLastCoord(LastCoordUpdateRequest dto) {
         User user = this.userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new UserNotFoundException(dto.getUserId()));
 
         user.updateLastCoord(dto.getCoord());
 
         this.userRepository.save(user);
+
+        // TODO: LastCoordUpdateResponse
+        return new LastCoordUpdateResponse(
+                dto.getUserId(),
+                dto.getCoord(),
+                user.getWarningLevel()
+        );
     }
 
     public void putUser(User user) {
         this.userRepository.save(user);
+    }
+
+    public void putUsers(Iterable<User> users) {
+        this.userRepository.saveAll(users);
     }
 
     public User findUser(String id) {
