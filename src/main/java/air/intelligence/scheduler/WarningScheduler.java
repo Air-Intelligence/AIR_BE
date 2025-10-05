@@ -31,7 +31,7 @@ public class WarningScheduler {
     private final WeatherRepository weatherRepository;
     private final GeoFeatureDataRepository geoFeatureDataRepository;
 
-    @Scheduled(cron = "0 */5 * * * ?")
+    @Scheduled(fixedRate = 1000 * 60 * 5)
     public void task() {
         log.info("Scheduled task");
         List<User> allUsers = this.userService.findAllUsers();
@@ -50,12 +50,14 @@ public class WarningScheduler {
                         .build())
                 .toList());
 
-        TreeMap<Double, No2DataDto> byLat = new TreeMap<>();
-        TreeMap<Double, No2DataDto> byLon = new TreeMap<>();
-        for (No2DataDto d : result) {
-            byLat.put(d.getLat(), d);
-            byLon.put(d.getLon(), d);
-        }
+        // Pre-calculate and save polygon and point geo features
+        this.geoFeatureDataRepository.deleteAll();
+        calculateAndSaveGeoFeatures(result);
+
+        // Retrieve the polygon features
+        GeoFeature[] polygonFeatures = geoFeatureDataRepository.findByType("polygon")
+                .map(GeoFeatureData::getFeatures)
+                .orElse(new GeoFeature[0]);
 
         Map<WarningLevel, Collection<User>> usersByWarningLevel = new HashMap<>();
 
@@ -63,62 +65,18 @@ public class WarningScheduler {
             double userLat = user.getLastCoord().getLat();
             double userLon = user.getLastCoord().getLon();
 
-            // Find closest NO2 data by lat
-            Map.Entry<Double, No2DataDto> lowerLat = byLat.floorEntry(userLat);
-            Map.Entry<Double, No2DataDto> higherLat = byLat.ceilingEntry(userLat);
-
-            // Find closest NO2 data by lon
-            Map.Entry<Double, No2DataDto> lowerLon = byLon.floorEntry(userLon);
-            Map.Entry<Double, No2DataDto> higherLon = byLon.ceilingEntry(userLon);
-
-            // Get the closest NO2 data point
-            No2DataDto closestNo2Data = null;
-            double minDistance = Double.MAX_VALUE;
-
-            for (Map.Entry<Double, No2DataDto> latEntry : Arrays.asList(lowerLat, higherLat)) {
-                for (Map.Entry<Double, No2DataDto> lonEntry : Arrays.asList(lowerLon, higherLon)) {
-                    if (latEntry != null && lonEntry != null) {
-                        for (No2DataDto data : result) {
-                            if (data.getLat() == latEntry.getValue().getLat() ||
-                                data.getLon() == lonEntry.getValue().getLon()) {
-                                double distance = Math.sqrt(
-                                    Math.pow(data.getLat() - userLat, 2) +
-                                    Math.pow(data.getLon() - userLon, 2)
-                                );
-                                if (distance < minDistance) {
-                                    minDistance = distance;
-                                    closestNo2Data = data;
-                                }
-                            }
-                        }
-                    }
+            // Check if user is inside any polygon
+            WarningLevel warningLevel = null;
+            for (GeoFeature feature : polygonFeatures) {
+                if (isPointInPolygon(userLon, userLat, feature.geometry().coordinates())) {
+                    warningLevel = (WarningLevel) feature.properties().value();
+                    break;
                 }
             }
 
-            // If no data found, use first available data as fallback
-            if (closestNo2Data == null && !result.isEmpty()) {
-                closestNo2Data = result.get(0);
-            }
-
-            // Determine warning level based on NO2 value
-            WarningLevel warningLevel;
-            if (closestNo2Data != null) {
-                double no2Value = closestNo2Data.getNo2();
-
-                // Example logic (replace with your thresholds):
-                if (no2Value > WarningConstant.RUN_VAL) {
-                    warningLevel = WarningLevel.RUN;
-                } else if (no2Value > WarningConstant.DANGER_VAL) {
-                    warningLevel = WarningLevel.DANGER;
-                } else if (no2Value > WarningConstant.WARNING_VAL) {
-                    warningLevel = WarningLevel.WARNING;
-                } else if (no2Value > WarningConstant.READY_VAL) {
-                    warningLevel = WarningLevel.READY;
-                } else {
-                    warningLevel = WarningLevel.SAFE;
-                }
-            } else {
-                warningLevel = WarningLevel.SAFE; // Default if no data
+            // If not in any polygon, default to SAFE
+            if (warningLevel == null) {
+                warningLevel = WarningLevel.SAFE;
             }
 
             usersByWarningLevel.computeIfAbsent(warningLevel, k -> new ArrayList<>()).add(user);
@@ -144,9 +102,6 @@ public class WarningScheduler {
         });
 
         this.userService.putUsers(usersByWarningLevel.values().stream().flatMap(Collection::stream).toList());
-
-        // Pre-calculate and save polygon and point geo features
-        calculateAndSaveGeoFeatures(result);
     }
 
     private void calculateAndSaveGeoFeatures(List<No2DataDto> no2Data) {
@@ -341,5 +296,38 @@ public class WarningScheduler {
         return features.stream()
                 .sorted((n1, n2) -> (int) ((double) n1.properties().value() * 100 - (double) n2.properties().value() * 100))
                 .toArray(GeoFeature[]::new);
+    }
+
+    private boolean isPointInPolygon(double lon, double lat, Object coordinates) {
+        if (!(coordinates instanceof double[][][])) {
+            return false;
+        }
+
+        double[][][] polygonCoords = (double[][][]) coordinates;
+        if (polygonCoords.length == 0 || polygonCoords[0].length == 0) {
+            return false;
+        }
+
+        // Use ray casting algorithm for point-in-polygon test
+        double[] ring = polygonCoords[0][0];
+        boolean inside = false;
+        int n = polygonCoords[0].length;
+
+        for (int i = 0, j = n - 1; i < n; j = i++) {
+            double[] pi = polygonCoords[0][i];
+            double[] pj = polygonCoords[0][j];
+
+            double xi = pi[0], yi = pi[1];
+            double xj = pj[0], yj = pj[1];
+
+            boolean intersect = ((yi > lat) != (yj > lat))
+                    && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+
+            if (intersect) {
+                inside = !inside;
+            }
+        }
+
+        return inside;
     }
 }
