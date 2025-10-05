@@ -30,7 +30,7 @@ public class WarningScheduler {
     private final NasaDataRepository nasaDataRepository;
     private final WeatherRepository weatherRepository;
 
-    @Scheduled(cron = "0 0 */1 * * ?")
+    @Scheduled(cron = "0 */5 * * * ?")
     public void task() {
         List<User> allUsers = this.userService.findAllUsers();
 
