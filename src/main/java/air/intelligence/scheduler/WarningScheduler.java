@@ -10,6 +10,8 @@ import air.intelligence.repository.WeatherRepository;
 import air.intelligence.repository.dto.No2DataDto;
 import air.intelligence.service.UserService;
 import air.intelligence.value.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
@@ -30,6 +32,7 @@ public class WarningScheduler {
     private final NasaDataRepository nasaDataRepository;
     private final WeatherRepository weatherRepository;
     private final GeoFeatureDataRepository geoFeatureDataRepository;
+    private final ObjectMapper om;
 
     @Scheduled(fixedRate = 1000 * 60 * 5)
     public void task() {
@@ -83,13 +86,23 @@ public class WarningScheduler {
         }
 
         usersByWarningLevel.forEach((warningLevel, users) -> {
+            final Map<String, Object> pushPayload = Map.of(
+                    "title", warningLevel.getWarningMessage(),
+                    "description", warningLevel.getWarningMessage()
+            );
+            String payloadAsString;
+            try {
+                payloadAsString = this.om.writeValueAsString(pushPayload);
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(e);
+            }
             users.forEach((user) -> {
                 try {
                     if (warningLevel.isDanger() && user.isNotifiable()) {
                         this.pushService.send(
                                 new Notification(
                                         user.getPushSubscription(),
-                                        "\uD83D\uDD50 "
+                                        payloadAsString
                                 )
                         );
                     }
