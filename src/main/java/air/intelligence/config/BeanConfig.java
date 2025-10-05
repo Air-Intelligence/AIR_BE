@@ -1,5 +1,6 @@
 package air.intelligence.config;
 
+import air.intelligence.repository.WeatherRepository;
 import air.intelligence.service.DefaultWeatherService;
 import air.intelligence.service.WeatherService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -11,7 +12,7 @@ public class BeanConfig {
 
     @Bean
     @ConditionalOnMissingBean(WeatherService.class)
-    public WeatherService defaultWeatherService() {
-        return new DefaultWeatherService();
+    public WeatherService defaultWeatherService(WeatherRepository weatherRepository) {
+        return new DefaultWeatherService(weatherRepository);
     }
 }
