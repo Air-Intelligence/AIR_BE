@@ -34,7 +34,7 @@ public class WarningScheduler {
     private final GeoFeatureDataRepository geoFeatureDataRepository;
     private final ObjectMapper om;
 
-    @Scheduled(fixedRate = 1000 * 60 * 5)
+    @Scheduled(fixedRate = 1000 * 60 * 60)
     public void task() {
         log.info("Scheduled task");
         List<User> allUsers = this.userService.findAllUsers();
@@ -322,25 +322,32 @@ public class WarningScheduler {
         }
 
         // Use ray casting algorithm for point-in-polygon test
-        double[] ring = polygonCoords[0][0];
-        boolean inside = false;
+        // Reference: https://sncap.tistory.com/680
+        int crosses = 0;
         int n = polygonCoords[0].length;
 
-        for (int i = 0, j = n - 1; i < n; j = i++) {
+        for (int i = 0; i < n; i++) {
+            int j = (i + 1) % n;
+
             double[] pi = polygonCoords[0][i];
             double[] pj = polygonCoords[0][j];
 
             double xi = pi[0], yi = pi[1];
             double xj = pj[0], yj = pj[1];
 
-            boolean intersect = ((yi > lat) != (yj > lat))
-                    && (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+            // Check if point's y-coordinate is between the vertices' y-coordinates
+            if ((yi > lat) != (yj > lat)) {
+                // Calculate x-coordinate of intersection point
+                double atX = (xj - xi) * (lat - yi) / (yj - yi) + xi;
 
-            if (intersect) {
-                inside = !inside;
+                // If intersection x-coordinate is to the right of the point, increment crosses
+                if (lon < atX) {
+                    crosses++;
+                }
             }
         }
 
-        return inside;
+        // If number of crosses is odd, point is inside polygon
+        return crosses % 2 == 1;
     }
 }
