@@ -11,7 +11,7 @@ public class TempController {
     private final WarningScheduler warningScheduler;
 
     @GetMapping("/temp")
-    public String temp() {
+    public String temp() throws Exception {
         this.warningScheduler.task();
         return "Hello, World!";
     }
