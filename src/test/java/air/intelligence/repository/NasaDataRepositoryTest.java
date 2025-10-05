@@ -2,6 +2,7 @@ package air.intelligence.repository;
 
 import air.intelligence.repository.dto.No2DataDto;
 import air.intelligence.repository.dto.No2ResponseDto;
+import air.intelligence.repository.dto.Pm25PredictionDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,5 +45,13 @@ class NasaDataRepositoryTest {
 
         normalized.stream().sorted((e1, e2) -> (int) (e1.getNo2() * 10000 - e2.getNo2() * 10000))
                 .forEach(System.out::println);
+    }
+
+    @Test
+    void test2() {
+        Pm25PredictionDto result = this.nasaDataRepository.findPrediction(37.7749, -122.4194);
+        System.out.println("here");
+        System.out.println(result);
+        System.out.println(result.getPred_pm25());
     }
 }

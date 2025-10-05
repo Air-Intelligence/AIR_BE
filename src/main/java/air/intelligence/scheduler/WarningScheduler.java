@@ -8,6 +8,7 @@ import air.intelligence.repository.GeoFeatureDataRepository;
 import air.intelligence.repository.NasaDataRepository;
 import air.intelligence.repository.WeatherRepository;
 import air.intelligence.repository.dto.No2DataDto;
+import air.intelligence.repository.dto.Pm25PredictionDto;
 import air.intelligence.service.UserService;
 import air.intelligence.value.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -16,11 +17,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nl.martijndwars.webpush.Notification;
 import nl.martijndwars.webpush.PushService;
+import org.jose4j.lang.JoseException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,7 +43,7 @@ public class WarningScheduler {
     private final ObjectMapper om;
 
     @Scheduled(fixedRate = 1000 * 60 * 60)
-    public void task() {
+    public void task() throws IOException, GeneralSecurityException, JoseException, ExecutionException, InterruptedException {
         log.info("Scheduled task");
         List<User> allUsers = this.userService.findAllUsers();
 
@@ -78,6 +86,24 @@ public class WarningScheduler {
                     log.info("point in polygon, warningLevel={}", feature.properties().value());
                     warningLevel = WarningLevel.valueOf(feature.properties().value().toString());
                     break;
+                } else {
+                    double prediction = this.nasaDataRepository.findPrediction(userLat, userLon).getPred_pm25();
+
+                    if (prediction > 0.01) {
+                        if (user.isNotifiable()) {
+                            final Map<String, Object> pushPayload = Map.of(
+                                    "title", WarningLevel.READY.getPredictionMessage(2),
+                                    "description", WarningLevel.READY.getPredictionMessage(2)
+                            );
+                            String body = this.om.writeValueAsString(pushPayload);
+                            this.pushService.send(
+                                    new Notification(
+                                            user.getPushSubscription(),
+                                            body
+                                    )
+                            );
+                        }
+                    }
                 }
                 log.info("point not in polygon");
             }

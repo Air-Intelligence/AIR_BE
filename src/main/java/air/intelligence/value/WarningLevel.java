@@ -18,4 +18,8 @@ public enum WarningLevel {
     public boolean isDanger() {
         return this != SAFE;
     }
+
+    public String getPredictionMessage(int hour) {
+        return hour + " hours later, " + this.warningMessage;
+    }
 }
