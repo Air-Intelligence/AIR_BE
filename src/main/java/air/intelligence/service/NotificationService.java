@@ -29,9 +29,12 @@ public class NotificationService {
 
     public void sendNotification() {
         try {
-            Map<String, String> payload = new HashMap<>();
+            Map<String, Object> payload = new HashMap<>();
             payload.put("title", "hello");
             payload.put("description", "world!");
+            payload.put("icon", "/spring-svgrepo-com.svg");
+            payload.put("badge", "/spring-svgrepo-com.svg");
+            payload.put("image", "/spring-svgrepo-com.svg");
 
             String payloadJson = objectMapper.writeValueAsString(payload);
 
