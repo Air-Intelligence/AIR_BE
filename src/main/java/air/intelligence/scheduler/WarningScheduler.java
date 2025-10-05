@@ -1,7 +1,9 @@
 package air.intelligence.scheduler;
 
+import air.intelligence.domain.NasaData;
 import air.intelligence.domain.User;
 import air.intelligence.repository.NasaDataRepository;
+import air.intelligence.repository.WeatherRepository;
 import air.intelligence.repository.dto.No2DataDto;
 import air.intelligence.repository.dto.No2ResponseDto;
 import air.intelligence.service.UserService;
@@ -13,6 +15,7 @@ import nl.martijndwars.webpush.PushService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -24,12 +27,26 @@ public class WarningScheduler {
     private final UserService userService;
     private final PushService pushService;
     private final NasaDataRepository nasaDataRepository;
+    private final WeatherRepository weatherRepository;
 
     @Scheduled(cron = "0 0 */1 * * ?")
     public void task() {
         List<User> allUsers = this.userService.findAllUsers();
 
         List<No2DataDto> result = this.nasaDataRepository.findNo2().getData();
+
+        String timestamp = LocalDateTime.now().toString();
+        this.weatherRepository.deleteAll();
+        this.weatherRepository.saveAll(result.stream()
+                .map((r) -> NasaData.builder()
+                        .timestamp(timestamp)
+                        .kind("no2")
+                        .lat(r.getLat())
+                        .lon(r.getLon())
+                        .value(r.getNo2())
+                        .build())
+                .toList());
+
         TreeMap<Double, No2DataDto> byLat = new TreeMap<>();
         TreeMap<Double, No2DataDto> byLon = new TreeMap<>();
         for (No2DataDto d : result) {
