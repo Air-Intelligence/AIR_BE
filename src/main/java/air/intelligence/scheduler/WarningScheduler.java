@@ -129,7 +129,7 @@ public class WarningScheduler {
                         this.pushService.send(
                                 new Notification(
                                         user.getPushSubscription(),
-                                        "Hello, World!"
+                                        "\uD83D\uDD50 "
                                 )
                         );
                     }
