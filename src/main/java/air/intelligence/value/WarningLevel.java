@@ -7,11 +7,11 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PACKAGE)
 @Getter
 public enum WarningLevel {
-    SAFE("You are safe"),
-    READY("Ready to run"),
-    WARNING("Warning!"),
-    DANGER("You are in danger."),
-    RUN("RUN!");
+    SAFE("GREEN, Safe, GOOD"),
+    READY("YELLOW, Mask Ready, COUGH"),
+    WARNING("ORANGE, Warning, MASK"),
+    DANGER("RED, Danger, HOME"),
+    RUN("BLACK, Run, !!!RUN!!!");
 
     private final String warningMessage;
 
