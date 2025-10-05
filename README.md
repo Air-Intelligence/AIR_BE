@@ -25,16 +25,59 @@ Air Intelligence Backend is a Spring Boot-based RESTful API server that provides
 
 ## Key Features
 
-- **Real-time Air Quality Data Collection**: Automatically fetches NO2 data from external FastAPI server every 5 minutes
+- **Real-time Air Quality Data Collection**: Automatically fetches NO2 data from external FastAPI server every hour
+- **AI-Powered PM2.5 Prediction**: Integrates with AI prediction service to forecast PM2.5 levels 2 hours ahead
 - **Pre-calculated Geographic Data & Caching**:
     - Generate hazardous area polygons using Convex Hull algorithm and store in MongoDB
     - Grid-based point data aggregation and storage
     - Batch processing to minimize real-time computation load
 - **Risk Level Analysis**: 5-tier warning level system (SAFE, READY, WARNING, DANGER, RUN)
 - **Point-in-Polygon Algorithm**: User location-based hazard zone determination using Ray Casting algorithm
-- **Web Push Notifications**: Automatic alerts when users enter hazardous zones
+- **Web Push Notifications**: Automatic alerts when users enter hazardous zones or high PM2.5 is predicted
 - **User Location Tracking**: Store and manage users' last known coordinates
 - **GeoJSON Format Support**: Provide air quality data in standard GeoJSON format
+
+## AI-Powered PM2.5 Prediction
+
+The system integrates with an AI prediction service to provide proactive air quality alerts.
+
+### How It Works
+
+1. **Scheduled Checking**: Every hour, the `WarningScheduler` checks all user locations
+2. **Polygon-Based Risk Assessment**: First, determines if users are inside any hazardous warning polygons
+3. **Predictive Analysis**: For users outside warning zones, queries the AI prediction API for future PM2.5 levels
+4. **Proactive Notifications**: Sends push notifications when predicted PM2.5 exceeds threshold (>0.01) 2 hours ahead
+
+### Prediction API Integration
+
+**Endpoint**: `POST https://fastapi.bestbreathe.us/api/predict/pm25`
+
+**Request Format**:
+```json
+{
+  "lat": 37.5665,
+  "lon": 126.9780,
+  "when": "2025-10-05T14:30:00"
+}
+```
+
+**Response Format**:
+```json
+{
+  "pred_pm25": 0.0123
+}
+```
+
+**Implementation**: `NasaDataRepository.findPrediction(lat, lon)`
+- Automatically calculates prediction time (current time + 2 hours)
+- Formats request with ISO 8601 timestamp
+- Returns predicted PM2.5 concentration value
+
+### Use Cases
+
+- **Early Warning**: Users receive notifications before air quality deteriorates
+- **Location-Specific Predictions**: Tailored forecasts for each user's exact location
+- **Complementary to Real-Time Data**: Combines current polygon-based warnings with future predictions
 
 ## Tech Stack
 
@@ -92,16 +135,6 @@ cd AIR_BE
 ./gradlew bootRun
 ```
 
-#### 3. Run Tests
-
-```bash
-# Run all tests
-./gradlew test
-
-# Run specific test class
-./gradlew test --tests "air.intelligence.repository.NasaDataRepositoryTest"
-```
-
 ### Environment Variables
 
 Configure the following values in `application.yml` or as environment variables:
@@ -134,13 +167,15 @@ FAST_API_URL=https://fastapi.bestbreathe.us
                         │  - Notification  │         │ - GeoFeatures   │
                         └──────────────────┘         └─────────────────┘
                                │      ▲
-                        Fetch  │      │ Every 5 min
-                        NO2    │      │ Scheduled
+                        Fetch  │      │ Every 1 hour
+                        NO2 &  │      │ Scheduled
+                        Predict│      │
                                ▼      │
-                        ┌──────────────────┐
-                        │   FastAPI Server │
-                        │  (NASA NO2 Data) │
-                        └──────────────────┘
+                        ┌──────────────────────────┐
+                        │   FastAPI Server         │
+                        │  - NASA NO2 Data API     │
+                        │  - AI PM2.5 Prediction   │
+                        └──────────────────────────┘
 ```
 
 ### Package Structure
@@ -170,8 +205,11 @@ air.intelligence/
 │   ├── UserRepository.java                # User MongoDB repository
 │   ├── WeatherRepository.java             # Air quality data MongoDB repository
 │   ├── GeoFeatureDataRepository.java      # GeoFeature cache repository
-│   ├── NasaDataRepository.java            # FastAPI integration repository
+│   ├── NasaDataRepository.java            # FastAPI integration (NO2 & AI Prediction)
 │   └── dto/                               # Repository DTOs
+│       ├── No2DataDto.java                # NO2 data response
+│       ├── No2ResponseDto.java            # NO2 API wrapper
+│       └── Pm25PredictionDto.java         # AI prediction response (NEW)
 │
 ├── domain/              # MongoDB entities
 │   ├── User.java                      # User domain
@@ -211,7 +249,7 @@ air.intelligence/
 #### 1. Periodic Data Collection & Notifications (WarningScheduler)
 
 ```
-[Execute every 5 minutes - fixedRate]
+[Execute every 1 hour - fixedRate]
      │
      ▼
 ┌──────────────────────────────┐
@@ -230,7 +268,7 @@ air.intelligence/
 ┌──────────────────────────────┐
 │ 3. Calculate & save          │
 │    GeoFeatures               │
-│    (NEW - Batch optimization)│
+│    (Batch optimization)      │
 │                              │
 │  a) Polygon Features:        │
 │     - Group by warning level │
@@ -255,7 +293,18 @@ air.intelligence/
              │
              ▼
 ┌──────────────────────────────┐
-│ 5. Send web push            │
+│ 5. AI Prediction (NEW)       │
+│    For users NOT in danger   │
+│                              │
+│    - Query PM2.5 prediction  │
+│      API (2 hours ahead)     │
+│    - If pred_pm25 > 0.01:    │
+│      Send notification       │
+└────────────┬─────────────────┘
+             │
+             ▼
+┌──────────────────────────────┐
+│ 6. Send web push             │
 │    notifications for         │
 │    DANGER+ levels            │
 └──────────────────────────────┘
