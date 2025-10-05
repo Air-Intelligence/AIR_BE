@@ -1,5 +1,6 @@
 package air.intelligence.config;
 
+import air.intelligence.repository.GeoFeatureDataRepository;
 import air.intelligence.repository.WeatherRepository;
 import air.intelligence.service.DefaultWeatherService;
 import air.intelligence.service.WeatherService;
@@ -12,7 +13,7 @@ public class BeanConfig {
 
     @Bean
     @ConditionalOnMissingBean(WeatherService.class)
-    public WeatherService defaultWeatherService(WeatherRepository weatherRepository) {
-        return new DefaultWeatherService(weatherRepository);
+    public WeatherService defaultWeatherService(GeoFeatureDataRepository geoFeatureDataRepository) {
+        return new DefaultWeatherService(geoFeatureDataRepository);
     }
 }
