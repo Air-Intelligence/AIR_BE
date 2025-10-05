@@ -13,7 +13,7 @@ public class DefaultWeatherService implements WeatherService {
     private final GeoFeatureDataRepository geoFeatureDataRepository;
 
     @Override
-    public GeoResponse getPolygonWeatherData(double lowerLat, double lowerLon, double upperLat, double upperLon) {
+    public GeoResponse getPolygonWeatherData() {
         GeoFeatureData geoFeatureData = geoFeatureDataRepository.findByType("polygon")
                 .orElse(null);
 
@@ -31,7 +31,7 @@ public class DefaultWeatherService implements WeatherService {
     }
 
     @Override
-    public GeoResponse getPointedWeatherData(double lowerLat, double lowerLon, double upperLat, double upperLon) {
+    public GeoResponse getPointedWeatherData() {
         GeoFeatureData geoFeatureData = geoFeatureDataRepository.findByType("point")
                 .orElseThrow(RuntimeException::new);
 

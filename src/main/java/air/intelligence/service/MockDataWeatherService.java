@@ -16,7 +16,7 @@ import java.util.Map;
 public class MockDataWeatherService implements WeatherService {
 
     @Override
-    public GeoResponse getPolygonWeatherData(double lowerLat, double lowerLon, double upperLat, double upperLon) {
+    public GeoResponse getPolygonWeatherData() {
         return new GeoResponse(
                 GeoFeatureType.FEATURE_COLLECTION.asPascalCase(),
                 Arrays.stream(
@@ -64,7 +64,7 @@ public class MockDataWeatherService implements WeatherService {
     }
 
     @Override
-    public GeoResponse getPointedWeatherData(double lowerLat, double lowerLon, double upperLat, double upperLon) {
+    public GeoResponse getPointedWeatherData() {
         return new GeoResponse(
                 GeoFeatureType.FEATURE_COLLECTION.asPascalCase(),
                 Arrays.stream(

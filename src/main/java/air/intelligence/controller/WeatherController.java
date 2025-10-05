@@ -24,7 +24,7 @@ public class WeatherController {
         return ResponseEntity.ok(
                 BaseResponse.of(
                         200,
-                        this.weatherService.getPolygonWeatherData(lowerLat, lowerLon, upperLat, upperLon)
+                        this.weatherService.getPolygonWeatherData()
                 )
         );
     }
@@ -37,7 +37,7 @@ public class WeatherController {
         return ResponseEntity.ok(
                 BaseResponse.of(
                         200,
-                        this.weatherService.getPointedWeatherData(lowerLat, lowerLon, upperLat, upperLon)
+                        this.weatherService.getPointedWeatherData()
                 )
         );
     }
