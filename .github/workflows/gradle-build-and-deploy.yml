@@ -9,45 +9,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. JDK 21 설치
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           distribution: temurin
           java-version: 21
 
-      # 3. gradlew 실행권한 부여
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # 4. 테스트 제외 빌드
       - name: Build without tests
         run: ./gradlew clean build -x test
 
-      # 빌드 산출물 확인
       - name: Check built JARs
         run: |
           echo "=== build/libs 디렉토리 내용 확인 ==="
           ls -al build/libs || true
 
-      # 5. JAR 파일 복사 (app.jar로 고정)
       - name: Copy JAR
         run: |
           mkdir -p build/docker
           cp build/libs/*-SNAPSHOT.jar build/docker/app.jar
 
-      # 6. DockerHub 로그인
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # 7. Docker Image Build & Push
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v4
         with:
@@ -56,7 +48,6 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/air-core-dev-be-images:latest
 
-      # 8. 서버 접속해서 docker compose 재배포
       - name: SSH and deploy with docker compose
         uses: appleboy/ssh-action@v0.1.7
         with:
@@ -69,3 +60,27 @@ jobs:
             docker compose pull
             docker compose up -d
             docker compose ps
+
+      - name: Send Success Discord Notification
+        if: success()
+        run: |
+          curl -H "Content-Type: application/json" \
+            -d '{"content": "**배포 성공!** :rocket: \n빌드 및 배포 과정이 성공적으로 완료되었습니다."}' \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+            
+      - name: Send Failure Discord Notification
+        if: failure()
+        run: |
+          outcome_message=""
+          if [ "${{ steps.build.outcome }}" == "failure" ]; then
+            outcome_message+="빌드 단계에서 오류 발생.\n"
+          fi
+          if [ "${{ steps.docker_build.outcome }}" == "failure" ]; then
+            outcome_message+="Docker 빌드 단계에서 오류 발생.\n"
+          fi
+          if [ "${{ steps.deploy.outcome }}" == "failure" ]; then
+            outcome_message+="배포 단계에서 오류 발생.\n"
+          fi
+          curl -H "Content-Type: application/json" \
+            -d "{\"content\": \"**배포 실패!** :x: \n빌드 및 배포 과정에서 오류가 발생했습니다. \n오류 내용: ${outcome_message}\"}" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
