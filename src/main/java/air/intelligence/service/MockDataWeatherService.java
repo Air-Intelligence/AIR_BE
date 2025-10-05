@@ -58,7 +58,7 @@ public class MockDataWeatherService implements WeatherService {
                                 }
                         )
                         .sorted((n1, n2) ->
-                                (int) (n1.properties().value() * 100 - n2.properties().value() * 100))
+                                (int) ((double) n1.properties().value() * 100 - (double) n2.properties().value() * 100))
                         .toArray(GeoFeature[]::new)
         );
     }
@@ -105,7 +105,7 @@ public class MockDataWeatherService implements WeatherService {
                                 }
                         )
                         .sorted((n1, n2) ->
-                                (int) (n1.properties().value() * 100 - n2.properties().value() * 100))
+                                (int) ((double) n1.properties().value() * 100 - (double) n2.properties().value() * 100))
                         .toArray(GeoFeature[]::new)
         );
     }

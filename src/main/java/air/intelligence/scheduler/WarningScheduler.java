@@ -1,5 +1,6 @@
 package air.intelligence.scheduler;
 
+import air.intelligence.config.WarningConstant;
 import air.intelligence.domain.NasaData;
 import air.intelligence.domain.User;
 import air.intelligence.repository.NasaDataRepository;
@@ -103,13 +104,13 @@ public class WarningScheduler {
                 double no2Value = closestNo2Data.getNo2();
 
                 // Example logic (replace with your thresholds):
-                if (no2Value > 380.0) {
+                if (no2Value > WarningConstant.RUN_VAL) {
                     warningLevel = WarningLevel.RUN;
-                } else if (no2Value > 200.0) {
+                } else if (no2Value > WarningConstant.DANGER_VAL) {
                     warningLevel = WarningLevel.DANGER;
-                } else if (no2Value > 100.0) {
+                } else if (no2Value > WarningConstant.WARNING_VAL) {
                     warningLevel = WarningLevel.WARNING;
-                } else if (no2Value > 58.0) {
+                } else if (no2Value > WarningConstant.READY_VAL) {
                     warningLevel = WarningLevel.READY;
                 } else {
                     warningLevel = WarningLevel.SAFE;
