@@ -10,6 +10,7 @@ import nl.martijndwars.webpush.PushService;
 import nl.martijndwars.webpush.Subscription;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,12 +30,20 @@ public class NotificationService {
 
     public void sendNotification() {
         try {
+            String svg = "<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'>"
+                    + "<rect width='100%' height='100%' fill='#0a74da'/>"
+                    + "<text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='40'>Hi</text>"
+                    + "</svg>";
+
+            // option A: URL-encode raw SVG into a data URL (utf-8) — 크기가 줄어듦
+            String svgEscaped = java.net.URLEncoder.encode(svg, StandardCharsets.UTF_8.toString())
+                    .replaceAll("\\+", "%20"); // 공백 처리
+            String dataUrl = "data:image/svg+xml;utf8," + svgEscaped;
+
             Map<String, Object> payload = new HashMap<>();
             payload.put("title", "hello");
             payload.put("description", "world!");
-            payload.put("icon", "/spring-svgrepo-com.svg");
-            payload.put("badge", "/spring-svgrepo-com.svg");
-            payload.put("image", "/spring-svgrepo-com.svg");
+            payload.put("icon", dataUrl);
 
             String payloadJson = objectMapper.writeValueAsString(payload);
 
