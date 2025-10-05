@@ -2,6 +2,7 @@ package air.intelligence.service;
 
 import air.intelligence.domain.User;
 import air.intelligence.dto.SubscriptionRequest;
+import air.intelligence.value.WarningLevel;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +29,7 @@ public class NotificationService {
         this.userService.putUser(user);
     }
 
-    public void sendNotification() {
+    public void sendNotification(WarningLevel warningLevel) {
         try {
             String svg = "<svg xmlns='http://www.w3.org/2000/svg' width='128' height='128'>"
                     + "<rect width='100%' height='100%' fill='#0a74da'/>"
@@ -41,8 +42,8 @@ public class NotificationService {
             String dataUrl = "data:image/svg+xml;utf8," + svgEscaped;
 
             Map<String, Object> payload = new HashMap<>();
-            payload.put("title", "hello");
-            payload.put("description", "world!");
+            payload.put("title", warningLevel.getWarningMessage());
+            payload.put("description", warningLevel.getWarningMessage());
             payload.put("icon", dataUrl);
 
             String payloadJson = objectMapper.writeValueAsString(payload);

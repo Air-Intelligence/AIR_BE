@@ -3,6 +3,7 @@ package air.intelligence.controller;
 import air.intelligence.dto.SubscriptionRequest;
 import air.intelligence.service.NotificationService;
 import air.intelligence.util.api.BaseResponse;
+import air.intelligence.value.WarningLevel;
 import lombok.RequiredArgsConstructor;
 import nl.martijndwars.webpush.Subscription;
 import org.springframework.http.ResponseEntity;
@@ -22,7 +23,7 @@ public class NotificationController {
     }
 
     @GetMapping("/sample")
-    public void sample() {
-        this.notificationService.sendNotification();
+    public void sample(@RequestParam(value = "warning-level", defaultValue = "SAFE") WarningLevel warningLevel) {
+        this.notificationService.sendNotification(warningLevel);
     }
 }
